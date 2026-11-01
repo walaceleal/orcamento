@@ -227,6 +227,7 @@ function desenharGrafico() {
     'number',
     tipo === 'acumulado' ? 'Gasto acumulado' : 'Gasto diário'
   );
+  dados.addColumn({ type: 'string', role: 'annotation' });
   dados.addColumn('number', 'Meta');
 
   let acumulado = 0;
@@ -245,9 +246,12 @@ function desenharGrafico() {
     if (valorGasto > maiorValor) maiorValor = valorGasto;
     if (meta > maiorValor) maiorValor = meta;
 
+    const rotuloValor = valorGasto > 0 ? formatarMoeda(valorGasto) : '';
+
     dados.addRow([
       rotuloData,
       valorGasto,
+      rotuloValor,
       meta
     ]);
   });
@@ -255,28 +259,34 @@ function desenharGrafico() {
   const maximo = Math.max(100, (tipo === 'acumulado' ? Math.max(config.orcamento, acumulado) : maiorValor) * 1.15);
 
   const opcoes = {
-    height: 450,
-    legend: { position: 'bottom' },
+    height: '100%',
+    legend: { position: 'none' },
     chartArea: {
-      left: 100,
-      right: 30,
-      top: 30,
-      bottom: 70,
-      width: '85%',
-      height: '75%'
+      left: 10,  // Reduzido ao máximo para eliminar o espaço em branco lateral
+      right: 10,
+      top: 20,
+      bottom: 35,
+      width: '98%',
+      height: '85%'
+    },
+    annotations: {
+      alwaysOutside: true,
+      textStyle: {
+        fontSize: 11,
+        bold: true,
+        color: '#333'
+      }
     },
     hAxis: {
-      title: 'Datas'
+      title: null
     },
     vAxis: {
-      title: 'Valor (R$)',
-      minValue: 0,
-      maxValue: maximo,
-      viewWindow: {
-        min: 0,
-        max: maximo
-      },
-      format: 'R$ #,##0.00'
+      textPosition: 'none',
+      gridlines: { count: 0 },
+      minorGridlines: { count: 0 },
+      baselineColor: 'transparent',
+      ticks: [],
+      format: '#,##0.00'
     },
     seriesType: 'bars',
     series: {
@@ -292,7 +302,7 @@ function desenharGrafico() {
       }
     },
     bar: {
-      groupWidth: '45%'
+      groupWidth: '55%'
     },
     tooltip: {
       textStyle: { fontSize: 13 }

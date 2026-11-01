@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle de Orçamento</title>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+
+<link rel="stylesheet" href="estilo.css">
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header" style="justify-content: flex-end;">
+    <div class="acoes">
+      <select id="tipoVisualizacao" onchange="desenharGrafico()">
+        <option value="diario">Gasto diário</option>
+        <option value="acumulado">Valor acumulado</option>
+      </select>
+
+      <button class="btn-config" onclick="abrirModal()"
+              title="Configurações">⚙</button>
+    </div>
+  </div>
+
+  <div class="pagamentos">
+    <div class="pagamentos-titulo">Pago ( Pretinha / Gatão ):</div>
+    <div class="barra-pagamentos" role="img"
+         aria-label="Comparativo dos valores pagos por Pretinha e Gatão">
+      <div class="barra-pretinha" id="barraPretinha"></div>
+      <div class="barra-gatao" id="barraGatao"></div>
+    </div>
+    <div class="legenda-pagamentos">
+      <span class="legenda-pretinha">
+        <span class="marcador"></span>
+        Pretinha: <strong id="infoPretinha"></strong>
+      </span>
+      <span class="legenda-gatao">
+        <span class="marcador"></span>
+        Gatão: <strong id="infoGatao"></strong>
+      </span>
+    </div>
+  </div>
+
+  <div id="grafico"></div>
+</div>
+
+<button class="btn-adicionar btn-adicionar-fixo" onclick="abrirModalGasto()">
+  + Adicionar gasto
+</button>
+
+<!-- MODAL CONFIGURAÇÕES -->
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+
+    <h3>⚙ Configurações do orçamento</h3>
+
+    <div class="campo">
+      <label for="configTitulo">Título</label>
+      <input type="text" id="configTitulo">
+    </div>
+
+    <div class="campo">
+      <label for="configOrcamento">Orçamento total</label>
+      <input type="number" id="configOrcamento"
+             min="0.01" step="0.01">
+    </div>
+
+    <div class="campo">
+      <label for="configDias">Número de dias</label>
+      <input type="number" id="configDias"
+             min="1" max="365" step="1">
+    </div>
+
+    <div class="modal-acoes">
+      <button class="btn-limpar" onclick="limparDados()">
+        Limpar dados
+      </button>
+
+      <div class="acoes-direita">
+        <button class="btn-cancelar" onclick="fecharModal()">
+          Cancelar
+        </button>
+
+        <button class="btn-salvar" onclick="salvarConfiguracoes()">
+          Salvar
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR GASTO -->
+
+<div class="modal-overlay" id="modalGastoOverlay">
+  <div class="modal">
+
+    <h3>＋ Adicionar gasto</h3>
+
+    <div class="campo">
+      <label for="gastoValor">Valor do gasto (R$)</label>
+      <input type="number" id="gastoValor"
+             min="0.01" step="0.01"
+             placeholder="Ex.: 150,00" autofocus>
+    </div>
+
+    <div class="campo">
+      <label for="gastoData">Data</label>
+      <input type="date" id="gastoData">
+    </div>
+
+    <div class="campo">
+      <label>Quem pagou?</label>
+      <div class="switch-pagador">
+        <input type="radio" id="pagPretinha" name="gastoPagador" value="Pretinha" checked>
+        <label for="pagPretinha" class="label-pretinha">Pretinha</label>
+
+        <input type="radio" id="pagGatao" name="gastoPagador" value="Gatão">
+        <label for="pagGatao" class="label-gatao">Gatão</label>
+      </div>
+    </div>
+
+    <div class="modal-acoes">
+      <button class="btn-cancelar" onclick="fecharModalGasto()">
+        Cancelar
+      </button>
+
+      <div class="acoes-direita">
+        <button class="btn-salvar" onclick="salvarGasto()">
+          Adicionar
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="código.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+* { 
+  box-sizing: border-box; 
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  background: #f5f6fa;
+  display: flex;
+  flex-direction: column;
+}
+
+body {
+  padding-bottom: 70px !important; /* Espaço inferior para o botão fixo não cobrir o conteúdo */
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+h2 { 
+  color: #333; 
+  margin: 0; 
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+select, button, input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+select {
+  background: white;
+  cursor: pointer;
+}
+
+button { 
+  cursor: pointer; 
+}
+
+.btn-config {
+  font-size: 22px;
+  border: none;
+  background: #f0f1f5;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+.btn-adicionar {
+  background: #4054d6;
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+
+/* Botão fixo inferior (w-100) */
+.btn-adicionar-fixo {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-radius: 0;
+  padding: 16px;
+  font-size: 16px;
+  z-index: 999;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+/* Seção da Barra de Pagamentos */
+.pagamentos {
+  margin: 28px 0 10px;
+}
+
+.pagamentos-titulo {
+  color: #444;
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.barra-pagamentos {
+  display: flex;
+  width: 100%;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #eceef3;
+}
+
+.barra-pretinha {
+  width: 0%;
+  background: #4054d6;
+  transition: width 0.25s ease;
+}
+
+.barra-gatao {
+  width: 0%;
+  background: #f0a12b;
+  transition: width 0.25s ease;
+}
+
+.legenda-pagamentos {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-top: 10px;
+  color: #555;
+  font-size: 14px;
+}
+
+.legenda-pagamentos strong {
+  color: #222;
+}
+
+.legenda-pretinha .marcador,
+.legenda-gatao .marcador {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 5px;
+}
+
+.legenda-pretinha .marcador { 
+  background: #4054d6; 
+}
+
+.legenda-gatao .marcador { 
+  background: #f0a12b; 
+}
+
+/* Área do Gráfico */
+#grafico {
+  flex: 1;
+  width: 100%;
+  min-height: 250px;
+}
+
+/* Modais */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+.modal {
+  background: white;
+  width: 100%;
+  max-width: 430px;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal h3 {
+  margin: 0 0 22px;
+  font-size: 21px;
+  color: #333;
+}
+
+.campo { 
+  margin-bottom: 17px; 
+}
+
+.campo label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+  color: #555;
+  font-weight: bold;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  padding: 12px;
+  outline: none;
+}
+
+.campo input:focus,
+.campo select:focus { 
+  border-color: #4054d6; 
+}
+
+/* Switch de Pagador (Pretinha / Gatão) */
+.switch-pagador {
+  display: flex;
+  background: #f0f1f5;
+  border-radius: 8px;
+  padding: 4px;
+  position: relative;
+  gap: 4px;
+}
+
+.switch-pagador input {
+  display: none;
+}
+
+.switch-pagador label {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  margin-bottom: 0;
+}
+
+#pagPretinha:checked ~ .label-pretinha {
+  background: #4054d6;
+  color: white;
+}
+
+#pagGatao:checked ~ .label-gatao {
+  background: #f0a12b;
+  color: white;
+}
+
+/* Botões de Ação do Modal */
+.modal-acoes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+
+.acoes-direita {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-cancelar {
+  background: #f0f1f5;
+  border: none;
+}
+
+.btn-salvar {
+  background: #4054d6;
+  color: white;
+  border: none;
+}
+
+.btn-limpar {
+  background: #e53935;
+  color: white;
+  border: none;
+}
+
+/* Responsividade para Telemóveis */
+@media (max-width: 600px) {
+  body { 
+    padding: 5px; 
+    padding-bottom: 65px !important;
+  }
+  
+  .container { 
+    padding: 10px; 
+    border-radius: 8px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .acoes {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .acoes select, 
+  .acoes button {
+    flex: 1;
+  }
+
+  .btn-config {
+    width: 42px !important;
+    flex: unset !important;
+  }
+
+  .legenda-pagamentos {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .modal {
+    padding: 18px;
+    max-width: 100%;
+    margin: 10px;
+  }
+
+  .modal-acoes {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .modal-acoes button,
+  .modal-acoes .acoes-direita,
+  .modal-acoes .acoes-direita button,
+  .btn-limpar {
+    width: 100%;
+  }
+
+  .acoes-direita {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+}

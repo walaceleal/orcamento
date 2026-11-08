@@ -9,8 +9,66 @@ let config = {
 
 let gastos = [];
 
-// Carregar dados salvos no localStorage ao iniciar
-function carregarDados() {
+// Funções auxiliares de Compactação / Descompactação base64 + GZIP
+async function comprimirDados(objeto) {
+  const jsonString = JSON.stringify(objeto);
+  const stream = new Blob([jsonString]).stream().pipeThrough(new CompressionStream('gzip'));
+  const buffer = await new Response(stream).arrayBuffer();
+  // Converte binário para base64 seguro para URL
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function descomprimirDados(base64UrlStr) {
+  try {
+    // Restaura caracteres base64 padrão
+    let base64 = base64UrlStr.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const response = new Response(stream);
+    const jsonString = await response.text();
+    return JSON.parse(jsonString);
+  } catch (e) {
+    // Fallback: se falhar, tenta ler como JSON simples decodificado (para compatibilidade com links antigos se houver)
+    return JSON.parse(decodeURIComponent(base64UrlStr));
+  }
+}
+
+// Carregar dados salvos no localStorage ou via URL
+async function carregarDados() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const dadosUrl = urlParams.get('dados');
+
+  if (dadosUrl) {
+    try {
+      const dadosDecodificados = await descomprimirDados(dadosUrl);
+      if (dadosDecodificados.config) config = dadosDecodificados.config;
+      if (dadosDecodificados.gastos) gastos = dadosDecodificados.gastos;
+
+      // Salva no localStorage do usuário B para persistir a navegação
+      salvarDadosLocal();
+
+      // Limpa os parâmetros da URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    } catch (e) {
+      console.error('Erro ao importar dados compactados da URL:', e);
+      alert('O link recebido parece estar corrompido ou inválido.');
+    }
+  }
+
+  // Comportamento normal de carregamento local
   const configSalva = localStorage.getItem('orcamento_config');
   const gastosSalvos = localStorage.getItem('orcamento_gastos');
 
@@ -35,6 +93,29 @@ function carregarDados() {
 function salvarDadosLocal() {
   localStorage.setItem('orcamento_config', JSON.stringify(config));
   localStorage.setItem('orcamento_gastos', JSON.stringify(gastos));
+}
+
+// Compartilhar dados compactados via WhatsApp
+async function compartilharWhatsApp() {
+  const pacoteDados = {
+    config: config,
+    gastos: gastos
+  };
+
+  try {
+    const dadosCompactados = await comprimirDados(pacoteDados);
+
+    const urlBase = window.location.origin + window.location.pathname;
+    const linkCompartilhamento = `${urlBase}?dados=${dadosCompactados}`;
+
+    const textoMensagem = encodeURIComponent(`Olá! Segue o link atualizado do nosso controle de orçamento:\n\n${linkCompartilhamento}`);
+    const urlWhatsApp = `https://api.whatsapp.com/send?text=${textoMensagem}`;
+
+    window.open(urlWhatsApp, '_blank');
+  } catch (e) {
+    console.error('Erro ao compactar dados:', e);
+    alert('Erro ao gerar o link compactado.');
+  }
 }
 
 const moeda = new Intl.NumberFormat('pt-BR', {
@@ -76,15 +157,16 @@ function obterTotalPorPagador(pagador) {
 }
 
 function inicializar() {
-  carregarDados();
-  
-  const selectTipo = document.getElementById('tipoVisualizacao');
-  if (selectTipo) {
-    selectTipo.value = 'diario';
-  }
+  // Como carregarDados agora é async, inicializamos o app após resolver a promessa
+  carregarDados().then(() => {
+    const selectTipo = document.getElementById('tipoVisualizacao');
+    if (selectTipo) {
+      selectTipo.value = 'diario';
+    }
 
-  atualizarInformacoes();
-  desenharGrafico();
+    atualizarInformacoes();
+    desenharGrafico();
+  });
 }
 
 function abrirModal() {
@@ -100,7 +182,6 @@ function fecharModal() {
 }
 
 function abrirModalGasto(index = -1) {
-  // Se estivermos abrindo a edição a partir da lista de gastos, fechamos a lista primeiro para evitar sobreposição
   fecharModalListaGastos();
 
   document.getElementById('gastoEditIndex').value = index;
@@ -169,7 +250,6 @@ function excluirGasto(index) {
   }
 }
 
-/* Modal de Lista de Gastos */
 function abrirModalListaGastos() {
   renderizarTabelaGastos();
   document.getElementById('modalListaGastosOverlay').style.display = 'flex';
@@ -188,7 +268,6 @@ function renderizarTabelaGastos() {
     return;
   }
 
-  // Ordenar lista por data decrescente para facilitar visualização
   const gastosComIndex = gastos.map((g, idx) => ({ ...g, originalIndex: idx }));
   gastosComIndex.sort((a, b) => b.data.localeCompare(a.data));
 

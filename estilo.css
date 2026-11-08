@@ -101,9 +101,25 @@ button {
   border-radius: 0;
   padding: 16px;
   font-size: 16px;
-  z-index: 999;
+  z-index: 900;
   box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
   border: none;
+}
+
+/* Botão de Compartilhar (WhatsApp) */
+.btn-compartilhar {
+  width: 100%;
+  background: #25d366;
+  color: white;
+  border: none;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.btn-compartilhar:hover {
+  background: #20ba5a;
 }
 
 /* Seção da Barra de Pagamentos */
@@ -183,7 +199,7 @@ button {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 1000;
+  z-index: 2000;
   align-items: center;
   justify-content: center;
   padding: 15px;

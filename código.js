@@ -9,12 +9,10 @@ let config = {
 
 let gastos = [];
 
-// Funções auxiliares de Compactação / Descompactação base64 + GZIP
 async function comprimirDados(objeto) {
   const jsonString = JSON.stringify(objeto);
   const stream = new Blob([jsonString]).stream().pipeThrough(new CompressionStream('gzip'));
   const buffer = await new Response(stream).arrayBuffer();
-  // Converte binário para base64 seguro para URL
   let binary = '';
   const bytes = new Uint8Array(buffer);
   for (let i = 0; i < bytes.byteLength; i++) {
@@ -25,7 +23,6 @@ async function comprimirDados(objeto) {
 
 async function descomprimirDados(base64UrlStr) {
   try {
-    // Restaura caracteres base64 padrão
     let base64 = base64UrlStr.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) {
       base64 += '=';
@@ -40,12 +37,10 @@ async function descomprimirDados(base64UrlStr) {
     const jsonString = await response.text();
     return JSON.parse(jsonString);
   } catch (e) {
-    // Fallback: se falhar, tenta ler como JSON simples decodificado (para compatibilidade com links antigos se houver)
     return JSON.parse(decodeURIComponent(base64UrlStr));
   }
 }
 
-// Carregar dados salvos no localStorage ou via URL
 async function carregarDados() {
   const urlParams = new URLSearchParams(window.location.search);
   const dadosUrl = urlParams.get('dados');
@@ -56,10 +51,7 @@ async function carregarDados() {
       if (dadosDecodificados.config) config = dadosDecodificados.config;
       if (dadosDecodificados.gastos) gastos = dadosDecodificados.gastos;
 
-      // Salva no localStorage do usuário B para persistir a navegação
       salvarDadosLocal();
-
-      // Limpa os parâmetros da URL
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
     } catch (e) {
@@ -68,7 +60,6 @@ async function carregarDados() {
     }
   }
 
-  // Comportamento normal de carregamento local
   const configSalva = localStorage.getItem('orcamento_config');
   const gastosSalvos = localStorage.getItem('orcamento_gastos');
 
@@ -89,13 +80,11 @@ async function carregarDados() {
   }
 }
 
-// Salvar dados no localStorage
 function salvarDadosLocal() {
   localStorage.setItem('orcamento_config', JSON.stringify(config));
   localStorage.setItem('orcamento_gastos', JSON.stringify(gastos));
 }
 
-// Compartilhar dados compactados via WhatsApp
 async function compartilharWhatsApp() {
   const pacoteDados = {
     config: config,
@@ -104,7 +93,6 @@ async function compartilharWhatsApp() {
 
   try {
     const dadosCompactados = await comprimirDados(pacoteDados);
-
     const urlBase = window.location.origin + window.location.pathname;
     const linkCompartilhamento = `${urlBase}?dados=${dadosCompactados}`;
 
@@ -157,7 +145,6 @@ function obterTotalPorPagador(pagador) {
 }
 
 function inicializar() {
-  // Como carregarDados agora é async, inicializamos o app após resolver a promessa
   carregarDados().then(() => {
     const selectTipo = document.getElementById('tipoVisualizacao');
     if (selectTipo) {
@@ -190,6 +177,7 @@ function abrirModalGasto(index = -1) {
     document.getElementById('tituloModalGasto').textContent = '✏️ Editar gasto';
     const gasto = gastos[index];
     document.getElementById('gastoValor').value = gasto.valor;
+    document.getElementById('gastoDescricao').value = gasto.descricao || '';
     document.getElementById('gastoData').value = gasto.data;
     if (gasto.pagador === 'Gatão') {
       document.getElementById('pagGatao').checked = true;
@@ -199,6 +187,7 @@ function abrirModalGasto(index = -1) {
   } else {
     document.getElementById('tituloModalGasto').textContent = '＋ Adicionar gasto';
     document.getElementById('gastoValor').value = '';
+    document.getElementById('gastoDescricao').value = '';
     document.getElementById('gastoData').value = new Date().toISOString().split('T')[0];
     document.getElementById('pagPretinha').checked = true;
   }
@@ -217,6 +206,7 @@ function fecharModalGasto() {
 function salvarGasto() {
   const index = Number(document.getElementById('gastoEditIndex').value);
   const valor = Number(document.getElementById('gastoValor').value);
+  const descricao = document.getElementById('gastoDescricao').value.trim();
   const data = document.getElementById('gastoData').value;
   const pagadorEl = document.querySelector('input[name="gastoPagador"]:checked');
   const pagador = pagadorEl ? pagadorEl.value : 'Pretinha';
@@ -227,9 +217,9 @@ function salvarGasto() {
   }
 
   if (index >= 0 && index < gastos.length) {
-    gastos[index] = { data, valor, pagador };
+    gastos[index] = { data, valor, descricao, pagador };
   } else {
-    gastos.push({ data, valor, pagador });
+    gastos.push({ data, valor, descricao, pagador });
   }
 
   salvarDadosLocal();
@@ -264,7 +254,7 @@ function renderizarTabelaGastos() {
   if (!corpo) return;
 
   if (gastos.length === 0) {
-    corpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #888; padding: 15px;">Nenhum gasto registrado.</td></tr>`;
+    corpo.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #888; padding: 15px;">Nenhum gasto registrado.</td></tr>`;
     return;
   }
 
@@ -274,10 +264,12 @@ function renderizarTabelaGastos() {
   corpo.innerHTML = gastosComIndex.map(g => {
     const dataFmt = new Date(g.data + 'T00:00:00').toLocaleDateString('pt-BR');
     const classeBadge = g.pagador === 'Gatão' ? 'badge-gatao' : 'badge-pretinha';
+    const descTexto = g.descricao ? g.descricao : '<span style="color:#aaa; font-style:italic;">Sem descrição</span>';
 
     return `
       <tr>
         <td>${dataFmt}</td>
+        <td>${descTexto}</td>
         <td><strong>${formatarMoeda(g.valor)}</strong></td>
         <td><span class="badge ${classeBadge}">${g.pagador}</span></td>
         <td style="text-align: center;">
@@ -469,7 +461,6 @@ function desenharGrafico() {
   }
 }
 
-// Fechar modais clicando fora
 document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) fecharModal();
 });

@@ -15,20 +15,20 @@
 
   <div class="header" style="justify-content: flex-end;">
     <div class="acoes">
+      <button class="btn-lista-gastos" onclick="abrirModalListaGastos()">📋 Ver Gastos</button>
+
       <select id="tipoVisualizacao" onchange="desenharGrafico()">
         <option value="diario">Gasto diário</option>
         <option value="acumulado">Valor acumulado</option>
       </select>
 
-      <button class="btn-config" onclick="abrirModal()"
-              title="Configurações">⚙</button>
+      <button class="btn-config" onclick="abrirModal()" title="Configurações">⚙</button>
     </div>
   </div>
 
   <div class="pagamentos">
     <div class="pagamentos-titulo">Pago ( Pretinha / Gatão ):</div>
-    <div class="barra-pagamentos" role="img"
-         aria-label="Comparativo dos valores pagos por Pretinha e Gatão">
+    <div class="barra-pagamentos" role="img" aria-label="Comparativo dos valores pagos por Pretinha e Gatão">
       <div class="barra-pretinha" id="barraPretinha"></div>
       <div class="barra-gatao" id="barraGatao"></div>
     </div>
@@ -52,10 +52,8 @@
 </button>
 
 <!-- MODAL CONFIGURAÇÕES -->
-
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-
     <h3>⚙ Configurações do orçamento</h3>
 
     <div class="campo">
@@ -65,47 +63,33 @@
 
     <div class="campo">
       <label for="configOrcamento">Orçamento total</label>
-      <input type="number" id="configOrcamento"
-             min="0.01" step="0.01">
+      <input type="number" id="configOrcamento" min="0.01" step="0.01">
     </div>
 
     <div class="campo">
       <label for="configDias">Número de dias</label>
-      <input type="number" id="configDias"
-             min="1" max="365" step="1">
+      <input type="number" id="configDias" min="1" max="365" step="1">
     </div>
 
     <div class="modal-acoes">
-      <button class="btn-limpar" onclick="limparDados()">
-        Limpar dados
-      </button>
-
+      <button class="btn-limpar" onclick="limparDados()">Limpar dados</button>
       <div class="acoes-direita">
-        <button class="btn-cancelar" onclick="fecharModal()">
-          Cancelar
-        </button>
-
-        <button class="btn-salvar" onclick="salvarConfiguracoes()">
-          Salvar
-        </button>
+        <button class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-salvar" onclick="salvarConfiguracoes()">Salvar</button>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- MODAL ADICIONAR GASTO -->
-
+<!-- MODAL ADICIONAR / EDITAR GASTO -->
 <div class="modal-overlay" id="modalGastoOverlay">
   <div class="modal">
-
-    <h3>＋ Adicionar gasto</h3>
+    <h3 id="tituloModalGasto">＋ Adicionar gasto</h3>
+    <input type="hidden" id="gastoEditIndex" value="-1">
 
     <div class="campo">
       <label for="gastoValor">Valor do gasto (R$)</label>
-      <input type="number" id="gastoValor"
-             min="0.01" step="0.01"
-             placeholder="Ex.: 150,00" autofocus>
+      <input type="number" id="gastoValor" min="0.01" step="0.01" placeholder="Ex.: 150,00" autofocus>
     </div>
 
     <div class="campo">
@@ -125,17 +109,39 @@
     </div>
 
     <div class="modal-acoes">
-      <button class="btn-cancelar" onclick="fecharModalGasto()">
-        Cancelar
-      </button>
-
+      <button class="btn-cancelar" onclick="fecharModalGasto()">Cancelar</button>
       <div class="acoes-direita">
-        <button class="btn-salvar" onclick="salvarGasto()">
-          Adicionar
-        </button>
+        <button class="btn-salvar" onclick="salvarGasto()">Salvar</button>
       </div>
     </div>
+  </div>
+</div>
 
+<!-- MODAL LISTA DE GASTOS -->
+<div class="modal-overlay" id="modalListaGastosOverlay">
+  <div class="modal modal-largo">
+    <h3>📋 Registro de Gastos</h3>
+
+    <div class="tabela-container">
+      <table class="tabela-gastos">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Valor</th>
+            <th>Pagador</th>
+            <th style="text-align: center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabelaGastos">
+          <!-- Preenchido via JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-acoes">
+      <div></div>
+      <button class="btn-cancelar" onclick="fecharModalListaGastos()">Fechar</button>
+    </div>
   </div>
 </div>
 

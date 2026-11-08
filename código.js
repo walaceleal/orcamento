@@ -52,7 +52,6 @@ function obterMetaDiaria() {
   return config.orcamento / config.dias;
 }
 
-// Retorna as datas ordenadas únicas presentes nos gastos ou [hoje-3, hoje+3] se vazio
 function obterDatasGrafico() {
   if (gastos.length > 0) {
     const datasUnicas = [...new Set(gastos.map(g => g.data))].sort();
@@ -68,10 +67,6 @@ function obterDatasGrafico() {
     }
     return arr;
   }
-}
-
-function obterTotalGasto() {
-  return gastos.reduce((total, gasto) => total + gasto.valor, 0);
 }
 
 function obterTotalPorPagador(pagador) {
@@ -104,10 +99,28 @@ function fecharModal() {
   document.getElementById('modalOverlay').style.display = 'none';
 }
 
-function abrirModalGasto() {
-  document.getElementById('gastoValor').value = '';
-  document.getElementById('gastoData').value = new Date().toISOString().split('T')[0];
-  document.getElementById('pagPretinha').checked = true;
+function abrirModalGasto(index = -1) {
+  // Se estivermos abrindo a edição a partir da lista de gastos, fechamos a lista primeiro para evitar sobreposição
+  fecharModalListaGastos();
+
+  document.getElementById('gastoEditIndex').value = index;
+
+  if (index >= 0 && index < gastos.length) {
+    document.getElementById('tituloModalGasto').textContent = '✏️ Editar gasto';
+    const gasto = gastos[index];
+    document.getElementById('gastoValor').value = gasto.valor;
+    document.getElementById('gastoData').value = gasto.data;
+    if (gasto.pagador === 'Gatão') {
+      document.getElementById('pagGatao').checked = true;
+    } else {
+      document.getElementById('pagPretinha').checked = true;
+    }
+  } else {
+    document.getElementById('tituloModalGasto').textContent = '＋ Adicionar gasto';
+    document.getElementById('gastoValor').value = '';
+    document.getElementById('gastoData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('pagPretinha').checked = true;
+  }
 
   document.getElementById('modalGastoOverlay').style.display = 'flex';
   
@@ -121,6 +134,7 @@ function fecharModalGasto() {
 }
 
 function salvarGasto() {
+  const index = Number(document.getElementById('gastoEditIndex').value);
   const valor = Number(document.getElementById('gastoValor').value);
   const data = document.getElementById('gastoData').value;
   const pagadorEl = document.querySelector('input[name="gastoPagador"]:checked');
@@ -131,12 +145,73 @@ function salvarGasto() {
     return;
   }
 
-  gastos.push({ data, valor, pagador });
+  if (index >= 0 && index < gastos.length) {
+    gastos[index] = { data, valor, pagador };
+  } else {
+    gastos.push({ data, valor, pagador });
+  }
+
   salvarDadosLocal();
 
   atualizarInformacoes();
   desenharGrafico();
   fecharModalGasto();
+  renderizarTabelaGastos();
+}
+
+function excluirGasto(index) {
+  if (confirm('Deseja realmente excluir este gasto?')) {
+    gastos.splice(index, 1);
+    salvarDadosLocal();
+    atualizarInformacoes();
+    desenharGrafico();
+    renderizarTabelaGastos();
+  }
+}
+
+/* Modal de Lista de Gastos */
+function abrirModalListaGastos() {
+  renderizarTabelaGastos();
+  document.getElementById('modalListaGastosOverlay').style.display = 'flex';
+}
+
+function fecharModalListaGastos() {
+  document.getElementById('modalListaGastosOverlay').style.display = 'none';
+}
+
+function renderizarTabelaGastos() {
+  const corpo = document.getElementById('corpoTabelaGastos');
+  if (!corpo) return;
+
+  if (gastos.length === 0) {
+    corpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #888; padding: 15px;">Nenhum gasto registrado.</td></tr>`;
+    return;
+  }
+
+  // Ordenar lista por data decrescente para facilitar visualização
+  const gastosComIndex = gastos.map((g, idx) => ({ ...g, originalIndex: idx }));
+  gastosComIndex.sort((a, b) => b.data.localeCompare(a.data));
+
+  corpo.innerHTML = gastosComIndex.map(g => {
+    const dataFmt = new Date(g.data + 'T00:00:00').toLocaleDateString('pt-BR');
+    const classeBadge = g.pagador === 'Gatão' ? 'badge-gatao' : 'badge-pretinha';
+
+    return `
+      <tr>
+        <td>${dataFmt}</td>
+        <td><strong>${formatarMoeda(g.valor)}</strong></td>
+        <td><span class="badge ${classeBadge}">${g.pagador}</span></td>
+        <td style="text-align: center;">
+          <button class="btn-acao btn-editar" onclick="editarGastoFromLista(${g.originalIndex})" title="Editar">✏️</button>
+          <button class="btn-acao btn-excluir" onclick="excluirGasto(${g.originalIndex})" title="Excluir">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function editarGastoFromLista(index) {
+  abrirModalGasto(index);
 }
 
 function limparDados() {
@@ -150,6 +225,7 @@ function limparDados() {
   atualizarInformacoes();
   desenharGrafico();
   fecharModal();
+  renderizarTabelaGastos();
 }
 
 function salvarConfiguracoes() {
@@ -256,13 +332,11 @@ function desenharGrafico() {
     ]);
   });
 
-  const maximo = Math.max(100, (tipo === 'acumulado' ? Math.max(config.orcamento, acumulado) : maiorValor) * 1.15);
-
   const opcoes = {
     height: '100%',
     legend: { position: 'none' },
     chartArea: {
-      left: 10,  // Reduzido ao máximo para eliminar o espaço em branco lateral
+      left: 10,
       right: 10,
       top: 20,
       bottom: 35,
@@ -317,15 +391,17 @@ function desenharGrafico() {
 }
 
 // Fechar modais clicando fora
-document.getElementById('modalOverlay')
-  .addEventListener('click', function(e) {
-    if (e.target === this) fecharModal();
-  });
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
 
-document.getElementById('modalGastoOverlay')
-  .addEventListener('click', function(e) {
-    if (e.target === this) fecharModalGasto();
-  });
+document.getElementById('modalGastoOverlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalGasto();
+});
+
+document.getElementById('modalListaGastosOverlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalListaGastos();
+});
 
 window.addEventListener('resize', function() {
   desenharGrafico();
